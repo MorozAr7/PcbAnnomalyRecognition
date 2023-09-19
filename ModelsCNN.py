@@ -65,6 +65,27 @@ class ConvBnReLU(nn.Module):
 			return self.Conv(x)
 
 
+class ResidualBlock(nn.Module):
+	def __init__(self, in_channels, out_channels, apply_activ=True):
+		super(ResidualBlock, self).__init__()
+		self.apply_activ = apply_activ
+  
+		self.Conv1 = ConvBnReLU(in_channels=in_channels, out_channels=out_channels)
+		self.Conv2 = ConvBnReLU(in_channels=in_channels, out_channels=out_channels, apply_activation=False)
+  
+		if self.apply_activ:
+			self.Activation = nn.SiLU(inplace=True)
+
+	def forward(self, x):
+		residual = x
+		x = self.Conv1(x)
+		x = self.Conv2(x)
+		if self.apply_activ:
+			return self.Activation(x + residual)
+		else:
+			return x + residual
+
+
 class EdgeRestoreModel(nn.Module):
 	def __init__(self):
 		super(EdgeRestoreModel, self).__init__()

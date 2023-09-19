@@ -97,12 +97,7 @@ def main(model, optimizer,  training_dataloader, validation_dataloader):
 										                                    training_dataloader,
 										                                    is_training=True,
 										                                    )
-		_, _, _, _ = one_epoch(
-																				model,
-					                                                            optimizer,
-											                                      validation_dataloader,
-											                                      is_training=False,
-											                                      )
+
 
 		print("Epoch: {}, Train l1: {}, Train SSIM: {}, Train l1 grad: {} Train SSIM grad: {}".format(epoch, training_loss_l1, train_loss_ssim, train_loss_l1_grad, train_loss_ssim_grad))
 		print("EPOCH RUNTIME", time.time() - since)
@@ -115,7 +110,7 @@ def main(model, optimizer,  training_dataloader, validation_dataloader):
 
 if __name__ == "__main__":
 	model = EdgeRestoreModel().to(DEVICE).apply(init_weights)
-
+	
 	optimizer = torch.optim.Adam(lr=LEARNING_RATE, params=model.parameters())
 
 	train_dataset = DiskAnomalyDataset(data_augmentation=augmentation_training if APPLY_AUGMENTATION else None, use_multiscale=False)

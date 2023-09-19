@@ -121,8 +121,8 @@ if __name__ == "__main__":
 	train_dataset = DiskAnomalyDataset(data_augmentation=augmentation_training if APPLY_AUGMENTATION else None, use_multiscale=False)
 	validation_dataset = DiskAnomalyDataset(data_augmentation=augmentation_training if APPLY_AUGMENTATION else None, use_multiscale=False)
 
-	training_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True, num_workers=16)
-	validation_dataloader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True, num_workers=16)
+	training_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True)
+	validation_dataloader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True)
 
 	main(model, optimizer, training_dataloader, validation_dataloader)
 

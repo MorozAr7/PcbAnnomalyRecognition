@@ -5,7 +5,7 @@ from torch.nn.functional import conv2d
 import cv2
 import numpy as np
 import torch
-from DiscQualityControlModelsCNN import EdgeRestoreModel
+from ModelsCNN import EdgeRestoreModel
 import matplotlib
 import albumentations as A
 from albumentations.pytorch import ToTensorV2

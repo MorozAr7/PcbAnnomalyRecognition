@@ -1,4 +1,4 @@
-from DiscQualityControlModelsCNN import EdgeRestoreModel
+from ModelsCNN import EdgeRestoreModel
 from LoadDataset import DiskAnomalyDataset
 from DataAugmentationGMSSSIM import augmentation_training
 from torch.utils.data import DataLoader

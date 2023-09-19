@@ -77,7 +77,7 @@ class DiskAnomalyDataset(torch.utils.data.Dataset):
 
 	def __getitem__(self, index):
 
-		image_reference = cv2.imread("/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedImagesPositive/" + f"pcb_{index}.png", 0)
+		image_reference = cv2.imread("./Images/CroppedImagesPositive/" + f"pcb_{index}.png", 0)
 		image_reference = self.random_crop(image_reference)
 		if self.data_augmentation:
 			transformed = self.data_augmentation(image=image_reference)

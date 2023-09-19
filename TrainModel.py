@@ -23,9 +23,9 @@ def init_weights(m):
 
 
 def change_learning_rate(optim, epoch):
-	epochs_to_change = list(range(500, 5000, 500))
+	epochs_to_change = list(range(250, 5000, 250))
 	if epoch in epochs_to_change:
-		optim.param_groups[0]["lr"] /= 1.75
+		optim.param_groups[0]["lr"] /= 1.25
 
 
 def one_epoch(models, optimizers, dataloader, is_training=True):
@@ -121,8 +121,8 @@ if __name__ == "__main__":
 	train_dataset = DiskAnomalyDataset(data_augmentation=augmentation_training if APPLY_AUGMENTATION else None, use_multiscale=False)
 	validation_dataset = DiskAnomalyDataset(data_augmentation=augmentation_training if APPLY_AUGMENTATION else None, use_multiscale=False)
 
-	training_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True)
-	validation_dataloader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True)
+	training_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True, num_workers=16)
+	validation_dataloader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True, num_workers=16)
 
 	main(model, optimizer, training_dataloader, validation_dataloader)
 

@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as f
 import numpy as np
 import torch
+from TrainConfig import DEVICE
 
 
 class TransposeConvBnReLU(nn.Module):
@@ -112,7 +113,7 @@ class EdgeRestoreModel(nn.Module):
 	@staticmethod
 	def update_partial_conv_binary_mask(mask, kernel=3, stride=1, dilation=1):
 		mask = torch.tensor(mask, dtype=torch.float32)
-		filter = torch.ones(size=(1, 1, kernel, kernel), dtype=torch.float32).to("mps")
+		filter = torch.ones(size=(1, 1, kernel, kernel), dtype=torch.float32).to(DEVICE)
 
 		convolved = f.conv2d(input=mask, weight=filter, stride=stride, dilation=dilation, padding=dilation, bias=None)
 		new_mask = torch.tensor((convolved > 0), dtype=torch.uint8)

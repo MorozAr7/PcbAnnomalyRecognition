@@ -94,7 +94,7 @@ def one_epoch(models, optimizers, dataloader, is_training=True):
 
 
 def main(model, optimizer,  training_dataloader, validation_dataloader):
-	for epoch in range(750, 5001):
+	for epoch in range(1, 5001):
 		since = time.time()
 		change_learning_rate(optimizer, epoch)
 

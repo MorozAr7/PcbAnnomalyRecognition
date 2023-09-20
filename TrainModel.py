@@ -26,7 +26,7 @@ def init_weights(m):
 def change_learning_rate(optim, epoch):
 	epochs_to_change = list(range(250, 5000, 250))
 	if epoch in epochs_to_change:
-		optim.param_groups[0]["lr"] /= 1.5
+		optim.param_groups[0]["lr"] /= 1.25
 
 
 def one_epoch(models, optimizers, dataloader, is_training=True):
@@ -55,7 +55,7 @@ def one_epoch(models, optimizers, dataloader, is_training=True):
 			"""visualize = restored_image.permute(0, 2, 3, 1).detach().cpu().numpy()
 			visualize_gt = gt_image.permute(0, 2, 3, 1).detach().cpu().numpy()
 			for index in range(gt_image.shape[0]):
-				cv2.imshow("img", np.vstack([visualize[index, ...], visualize_gt[index, ...]]))
+				cv2.imshow("img", np.hstack([visualize[index, ...], visualize_gt[index, ...]]))
 				cv2.waitKey(0)"""
 			real_image_multiscale = api.get_multiscale_representation(gt_image)
 			in_painted_image_multiscale = api.get_multiscale_representation(restored_image)
@@ -118,7 +118,7 @@ if __name__ == "__main__":
 	#model.load_state_dict(torch.load("/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Model1.pt", map_location="cpu"))
 	optimizer = torch.optim.Adam(lr=LEARNING_RATE, params=model.parameters())
 
-	train_dataset = DiskAnomalyDataset(data_augmentation=augmentation_training if APPLY_AUGMENTATION else None, use_multiscale=False)
+	train_dataset = DiskAnomalyDataset(data_augmentation=None if APPLY_AUGMENTATION else None, use_multiscale=False)
 	validation_dataset = DiskAnomalyDataset(data_augmentation=augmentation_training if APPLY_AUGMENTATION else None, use_multiscale=False)
 
 	training_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True)

@@ -35,10 +35,10 @@ class TransposeConvBnReLU(nn.Module):
 
 
 class ConvBnReLU(nn.Module):
-	def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1, groups=1, dilation_rate=1, apply_bn=True, apply_relu=True, apply_bias=False):
+	def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1, groups=1, dilation_rate=1, apply_bn=True, apply_activation=True, apply_bias=False):
 		super(ConvBnReLU, self).__init__()
 
-		self.apply_relu = apply_relu
+		self.apply_relu = apply_activation
 		self.apply_bn = apply_bn
 		self.Conv = nn.Conv2d(in_channels=in_channels,
 		                      out_channels=out_channels,
@@ -50,7 +50,7 @@ class ConvBnReLU(nn.Module):
 		                      dilation=dilation_rate)
 		if apply_bn:
 			self.BN = nn.BatchNorm2d(num_features=out_channels)
-		if apply_relu:
+		if apply_activation:
 			self.ReLU = nn.SiLU(inplace=True)
 
 	def forward(self, x):
@@ -90,8 +90,8 @@ class EdgeRestoreModel(nn.Module):
 	def __init__(self):
 		super(EdgeRestoreModel, self).__init__()
 
-		channels = [3, 32, 64, 128, 256, 512]
-		self.ConvLayer0 = ConvBnReLU(in_channels=1, out_channels=channels[1])
+		channels = [1, 64, 128, 256, 512, 512]
+		self.ConvLayer0 = ConvBnReLU(in_channels=channels[0], out_channels=channels[1])
 
 		self.Downscale1 = ConvBnReLU(in_channels=channels[1], out_channels=channels[2], stride=2)
 
@@ -113,21 +113,29 @@ class EdgeRestoreModel(nn.Module):
 
 		self.Upscale1 = TransposeConvBnReLU(in_channels=channels[5], out_channels=channels[4])
 
-		self.ConvLayer6 = ConvBnReLU(in_channels=channels[4] * 2, out_channels=channels[4])
-
+		#self.ConvLayer6 = ConvBnReLU(in_channels=channels[4], out_channels=channels[4])
+		self.ResLayer1 = ResidualBlock(in_channels=channels[4], out_channels=channels[4])
+		self.ResLayer2 = ResidualBlock(in_channels=channels[4], out_channels=channels[4])
+  
 		self.Upscale2 = TransposeConvBnReLU(in_channels=channels[4], out_channels=channels[3])
 
-		self.ConvLayer7 = ConvBnReLU(in_channels=channels[3] * 2, out_channels=channels[3])
+		#self.ConvLayer7 = ConvBnReLU(in_channels=channels[3], out_channels=channels[3])
 
+		self.ResLayer3 = ResidualBlock(in_channels=channels[3], out_channels=channels[3])
+		self.ResLayer4 = ResidualBlock(in_channels=channels[3], out_channels=channels[3])
+  
 		self.Upscale3 = TransposeConvBnReLU(in_channels=channels[3], out_channels=channels[2])
 
-		self.ConvLayer8 = ConvBnReLU(in_channels=channels[2] * 2, out_channels=channels[2])
+		#self.ConvLayer8 = ConvBnReLU(in_channels=channels[2], out_channels=channels[2])
 
+		self.ResLayer5 = ResidualBlock(in_channels=channels[2], out_channels=channels[2])
+		self.ResLayer6 = ResidualBlock(in_channels=channels[2], out_channels=channels[2])
+  
 		self.Upscale4 = TransposeConvBnReLU(in_channels=channels[2], out_channels=channels[1])
 
-		self.ConvLayer9 = ConvBnReLU(in_channels=channels[1] * 2, out_channels=channels[1])
+		self.OutConv1 = ConvBnReLU(in_channels=channels[1], out_channels=channels[1])
 
-		self.OutConv = ConvBnReLU(in_channels=channels[1], out_channels=1, apply_bn=False, apply_relu=False, apply_bias=False)
+		self.OutConv2 = ConvBnReLU(in_channels=channels[1], out_channels=channels[0], apply_bn=False, apply_activation=False, apply_bias=False)
 
 		self.Sigmoid = nn.Sigmoid()
 
@@ -187,21 +195,24 @@ class EdgeRestoreModel(nn.Module):
 
 		x = self.Upscale1(x * mask * rescale_factor)
 
-		x = self.ConvLayer6(torch.cat([x, skip3], dim=1))
-
+		x = self.ResLayer1(x + skip3)
+		x = self.ResLayer2(x)
+  
 		x = self.Upscale2(x)
 
-		x = self.ConvLayer7(torch.cat([x, skip2], dim=1))
-
+		x = self.ResLayer3(x + skip2)
+		x = self.ResLayer4(x)
+  
 		x = self.Upscale3(x)
 
-		x = self.ConvLayer8(torch.cat([x, skip1], dim=1))
+		x = self.ResLayer5(x + skip1)
+		x = self.ResLayer6(x)
 
 		x = self.Upscale4(x)
 
-		x = self.ConvLayer9(torch.cat([x, skip0], dim=1))
+		x = self.OutConv1(x + skip0)
 
-		x = self.OutConv(x)
+		x = self.OutConv2(x)
 
 		x = self.Sigmoid(x)
 

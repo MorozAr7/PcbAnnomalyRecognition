@@ -1,7 +1,7 @@
 import torch
 
 LEARNING_RATE = 0.002
-BATCH_SIZE = 24
+BATCH_SIZE = 20
 APPLY_AUGMENTATION = True
 
 DEVICE = "mps" if getattr(torch, 'has_mps', False) else 4 if torch.cuda.is_available() else "cpu"

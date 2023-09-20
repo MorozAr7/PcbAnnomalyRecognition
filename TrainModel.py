@@ -48,7 +48,7 @@ def one_epoch(models, optimizers, dataloader, is_training=True):
 
 			for mask_idx in range(masks.shape[1]):
 				mask = masks[:, mask_idx:mask_idx + 1, ...]
-				print(torch.mean(gt_image))
+				#print(torch.mean(gt_image))
 				restored_image = models(gt_image * mask + (1 - mask) * torch.mean(gt_image), mask)
 				restored_images_per_masks = torch.cat([restored_images_per_masks, restored_image], dim=1)
 

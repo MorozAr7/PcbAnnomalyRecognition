@@ -115,7 +115,7 @@ def main(model, optimizer,  training_dataloader, validation_dataloader):
 
 if __name__ == "__main__":
 	model = EdgeRestoreModel().to(DEVICE).apply(init_weights)
-	model.load_state_dict(torch.load("/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Model3.pt", map_location="cpu"))
+	model.load_state_dict(torch.load("./Model3.pt", map_location="cpu"))
 	optimizer = torch.optim.Adam(lr=LEARNING_RATE, params=model.parameters())
 
 	train_dataset = DiskAnomalyDataset(data_augmentation=augmentation_training if APPLY_AUGMENTATION else None, use_multiscale=False)

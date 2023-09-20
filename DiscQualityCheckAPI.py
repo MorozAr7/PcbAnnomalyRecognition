@@ -15,9 +15,9 @@ import torchvision
 class DiscQualityCheckApi:
 	def __init__(self, DEVICE):
 		self.model = EdgeRestoreModel()
-		self.model_weights = "/Users/artemmoroz/Desktop/CIIRC_projects/EdgeRestorationInfill/DiscsQualityCheckModel1.pt"
+		self.model_weights = "/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Model3.pt"
 		self.DEVICE = DEVICE
-		#self.initialize_model()
+		self.initialize_model()
 		self.image_size = 256
 		self.num_chunks = 4
 		self.square_sizes = [2 ** i for i in range(4, 7)]
@@ -30,7 +30,7 @@ class DiscQualityCheckApi:
 		self.K2 = 0.03
 		self.C1 = (self.K1 * 1) ** 2
 		self.C2 = (self.K2 * 1) ** 2
-		self.dataset_mean = 0.5958
+		self.dataset_mean = 0.31199355763045955
 		self.num_images = 4
 		self.masks = self.create_masks_()
 		self.defect_score_threshold = 0.6
@@ -82,7 +82,7 @@ class DiscQualityCheckApi:
 		contrast_sim = (2 * torch.sqrt(prediction_std_map + 1e-4) * torch.sqrt(ground_truth_std_map + 1e-4) + self.C1) / (prediction_std_map + ground_truth_std_map + self.C1)
 		content_sim = (joint_std_map + self.C1) / (torch.sqrt(prediction_std_map + 1e-4) * torch.sqrt(ground_truth_std_map + 1e-4) + self.C1)
 
-		ssim_map = content_sim ** 4 * brightness_sim ** 1 * contrast_sim ** 1
+		ssim_map = content_sim ** 1 * brightness_sim ** 1 * contrast_sim ** 1
 		# ssim_map = content_sim * brightness_sim * contrast_sim
 		ssim_map = self.resize_tensor(ssim_map, in_painted_image_tensor.shape[2])
 
@@ -189,7 +189,7 @@ class DiscQualityCheckApi:
 
 	def initialize_model(self):
 		self.model.load_state_dict(torch.load(self.model_weights, map_location="cpu"))
-		self.model = self.model.eval().to(self.DEVICE)
+		self.model = self.model.train().to(self.DEVICE)
 
 	@staticmethod
 	def get_pixel_wise_max(maps_tensor):
@@ -197,7 +197,7 @@ class DiscQualityCheckApi:
 
 	def get_multiscale_similarity(self, real_image_multiscale_maps, in_painted_image_multiscale_maps, similarity_function):
 		multi_window_maps = list()
-		for window_size in [5, 7, 9]:
+		for window_size in [5, 5, 5]:
 			multiscale_sim_maps = list()
 			for index in range(len(real_image_multiscale_maps)):
 				similarity_maps, _ = similarity_function(in_painted_image_multiscale_maps[index], real_image_multiscale_maps[index].repeat(1, 3, 1, 1).
@@ -253,7 +253,7 @@ class DiscQualityCheckApi:
 			numpy_defect_map = defect_map[image_index][0].detach().cpu().numpy()
 			segmentation = self.get_threshold_segmentation(real_image_tensor[image_index:image_index + 1],
 			                                                                      in_painted_images_combined[image_index])[0][0].detach().cpu().numpy()
-			numpy_defect_map = numpy_defect_map * segmentation
+			numpy_defect_map = numpy_defect_map# * segmentation
 			numpy_defect_map = numpy_defect_map#(numpy_defect_map - np.mean(numpy_defect_map[np.array(segmentation, dtype=bool)])) / np.std(numpy_defect_map[np.array(segmentation, dtype=bool)])
 			mean_value_defect_map = np.max(numpy_defect_map)
 			defect_scores.append(mean_value_defect_map)
@@ -269,8 +269,8 @@ class DiscQualityCheckApi:
 	def visualize_result_batch(self, images_batch, heatmap_batch):
 		concat = torch.cat([images_batch.repeat(1, 3, 1, 1).reshape(1, 3, self.image_size, self.image_size * self.num_images),
 		                            heatmap_batch.reshape(1, 3, self.image_size, self.image_size * self.num_images)], dim=3).permute(0, 2, 3, 1).detach().cpu().numpy()[0]
-		#Qcv2.imshow("result", concat)
-		#cv2.waitKey(0)
+		cv2.imshow("result", concat)
+		cv2.waitKey(0)
 
 	@staticmethod
 	def save_result_image(heatmaps, images):
@@ -304,6 +304,7 @@ class DiscQualityCheckApi:
 		return defect_scores
 
 	def process_images(self, images):
+		self.num_images = len(images)
 		self.masks = self.create_masks_().repeat(self.num_images, 1, 1, 1)
 		since = time.time()
 		images_batch = torch.tensor([]).to(self.DEVICE)
@@ -321,9 +322,17 @@ class DiscQualityCheckApi:
 		with torch.no_grad():
 
 			in_painted_images = self.model(images_batch_repeated * self.masks + (1 - self.masks) * self.dataset_mean, self.masks)
-
+			
 			in_painted_images_combined = self.combine_in_painted_chunks(in_painted_images, self.masks)
-
+			print(in_painted_images_combined.shape)
+			vis = in_painted_images_combined.detach().permute(0, 1, 3, 4, 2).cpu().numpy()
+			for index_image in range(self.num_images):
+				for index in range(vis.shape[1]):
+					print(vis[index_image, index, ...].shape, images[index_image].shape)
+					inpainted = vis[index_image, index, ..., 0]
+					real = cv2.resize(images[index_image], (self.image_size, self.image_size))/255
+					cv2.imshow("img", np.hstack([inpainted, real]))
+					cv2.waitKey(0)
 			real_image_multiscale = self.get_multiscale_representation(images_batch)
 			in_painted_image_multiscale = self.get_multiscale_representation(in_painted_images_combined, is_real=False)
 
@@ -336,7 +345,7 @@ class DiscQualityCheckApi:
 			gradient_similarity = self.combine_multiscale_maps(multiscale_grad_sim_maps)
 			image_similarity = self.combine_multiscale_maps(multiscale_image_sim_maps)
 
-			total_defect_map = gradient_similarity + image_similarity
+			total_defect_map = (gradient_similarity + image_similarity)/2
 
 			heatmap_batch, defect_scores = self.get_rgb_heatmap(total_defect_map, in_painted_images_combined, images_batch)
 			print(defect_scores)
@@ -362,15 +371,17 @@ if __name__ == "__main__":
 	images_list = images_correct if CORRECT else images_incorrect
 	images_path = path_correct if CORRECT else path_incorrect
 	print(len(images_list))
+	range_min = 0
+	range_max = 200
 	for image_name in images_list:
-		image1 = cv2.imread(path_correct + image_name, 0)
-		image2 = cv2.imread("/Users/artemmoroz/Desktop/CIIRC_projects/EdgeRestorationInfill/ServerData/disc_qc_1.png", 0)
-		image3 = cv2.imread("/Users/artemmoroz/Desktop/CIIRC_projects/EdgeRestorationInfill/ServerData/disc_qc_2.png", 0)
-		image4 = cv2.imread("/Users/artemmoroz/Desktop/CIIRC_projects/EdgeRestorationInfill/ServerData/disc_qc_3.png", 0)
-		image5 = cv2.imread("/Users/artemmoroz/Desktop/CIIRC_projects/EdgeRestorationInfill/ServerData/disc_qc_4.png", 0)
-		image6 = cv2.imread("/Users/artemmoroz/Desktop/CIIRC_projects/EdgeRestorationInfill/ServerData/disc_qc_5.png", 0)
-		image7 = cv2.imread("/Users/artemmoroz/Desktop/CIIRC_projects/EdgeRestorationInfill/ServerData/disc_qc_6.png", 0)
-		image8 = cv2.imread("/Users/artemmoroz/Desktop/CIIRC_projects/EdgeRestorationInfill/ServerData/disc_qc_7.png", 0)
+		image1 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
+		image2 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
+		image3 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
+		image4 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
+		image5 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
+		image6 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
+		image7 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
+		image8 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
 		images = [image1, image2, image3, image4, image5, image6, image7, image8]
 
 		qc_scores = api.get_quality_check_results(images)

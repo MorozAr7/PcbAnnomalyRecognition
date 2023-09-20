@@ -24,7 +24,7 @@ def init_weights(m):
 
 
 def change_learning_rate(optim, epoch):
-	epochs_to_change = list(range(250, 5000, 250))
+	epochs_to_change = list(range(500, 5000, 500))
 	if epoch in epochs_to_change:
 		optim.param_groups[0]["lr"] /= 1.25
 
@@ -48,13 +48,14 @@ def one_epoch(models, optimizers, dataloader, is_training=True):
 
 			for mask_idx in range(masks.shape[1]):
 				mask = masks[:, mask_idx:mask_idx + 1, ...]
+				print(torch.mean(gt_image))
 				restored_image = models(gt_image * mask + (1 - mask) * torch.mean(gt_image), mask)
 				restored_images_per_masks = torch.cat([restored_images_per_masks, restored_image], dim=1)
 
 			restored_image = torch.sum(restored_images_per_masks * (1 - masks), dim=1, keepdim=True)
-			"""visualize = restored_image.permute(0, 2, 3, 1).detach().cpu().numpy()
-			visualize_gt = gt_image.permute(0, 2, 3, 1).detach().cpu().numpy()
-			for index in range(gt_image.shape[0]):
+			#visualize = restored_image.permute(0, 2, 3, 1).detach().cpu().numpy()
+			#visualize_gt = gt_image.permute(0, 2, 3, 1).detach().cpu().numpy()
+			"""for index in range(gt_image.shape[0]):
 				cv2.imshow("img", np.hstack([visualize[index, ...], visualize_gt[index, ...]]))
 				cv2.waitKey(0)"""
 			real_image_multiscale = api.get_multiscale_representation(gt_image)
@@ -115,7 +116,7 @@ def main(model, optimizer,  training_dataloader, validation_dataloader):
 
 if __name__ == "__main__":
 	model = EdgeRestoreModel().to(DEVICE).apply(init_weights)
-	model.load_state_dict(torch.load("./Model3.pt", map_location="cpu"))
+	#model.load_state_dict(torch.load("./Model3.pt", map_location="cpu"))
 	optimizer = torch.optim.Adam(lr=LEARNING_RATE, params=model.parameters())
 
 	train_dataset = DiskAnomalyDataset(data_augmentation=augmentation_training if APPLY_AUGMENTATION else None, use_multiscale=False)

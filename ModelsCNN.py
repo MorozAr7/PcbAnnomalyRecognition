@@ -113,20 +113,20 @@ class EdgeRestoreModel(nn.Module):
 
 		self.Upscale1 = TransposeConvBnReLU(in_channels=channels[5], out_channels=channels[4])
 
-		#self.ConvLayer6 = ConvBnReLU(in_channels=channels[4], out_channels=channels[4])
+		#self.ConvLayer6 = ConvBnReLU(in_channels=channels[4] * 2, out_channels=channels[4])
 		self.ResLayer1 = ResidualBlock(in_channels=channels[4], out_channels=channels[4])
 		self.ResLayer2 = ResidualBlock(in_channels=channels[4], out_channels=channels[4])
   
 		self.Upscale2 = TransposeConvBnReLU(in_channels=channels[4], out_channels=channels[3])
 
-		#self.ConvLayer7 = ConvBnReLU(in_channels=channels[3], out_channels=channels[3])
+		#self.ConvLayer7 = ConvBnReLU(in_channels=channels[3] * 2, out_channels=channels[3])
 
 		self.ResLayer3 = ResidualBlock(in_channels=channels[3], out_channels=channels[3])
 		self.ResLayer4 = ResidualBlock(in_channels=channels[3], out_channels=channels[3])
   
 		self.Upscale3 = TransposeConvBnReLU(in_channels=channels[3], out_channels=channels[2])
 
-		#self.ConvLayer8 = ConvBnReLU(in_channels=channels[2], out_channels=channels[2])
+		#self.ConvLayer8 = ConvBnReLU(in_channels=channels[2] * 2, out_channels=channels[2])
 
 		self.ResLayer5 = ResidualBlock(in_channels=channels[2], out_channels=channels[2])
 		self.ResLayer6 = ResidualBlock(in_channels=channels[2], out_channels=channels[2])
@@ -194,23 +194,23 @@ class EdgeRestoreModel(nn.Module):
 		mask, rescale_factor = self.update_partial_conv_binary_mask(mask, dilation=4)
 
 		x = self.Upscale1(x * mask * rescale_factor)
-
-		x = self.ResLayer1(x + skip3)
+		#x = self.ConvLayer6(torch.cat([x, skip3], dim=1))
+		x = self.ResLayer1(x)
 		x = self.ResLayer2(x)
   
-		x = self.Upscale2(x)
-
-		x = self.ResLayer3(x + skip2)
+		x = self.Upscale2(x + skip3)
+		#x = self.ConvLayer7(torch.cat([x, skip2], dim=1))
+		x = self.ResLayer3(x)
 		x = self.ResLayer4(x)
   
-		x = self.Upscale3(x)
-
-		x = self.ResLayer5(x + skip1)
+		x = self.Upscale3(x + skip2)
+		#x = self.ConvLayer8(torch.cat([x, skip1], dim=1))
+		x = self.ResLayer5(x)
 		x = self.ResLayer6(x)
 
-		x = self.Upscale4(x)
+		x = self.Upscale4(x + skip1)
 
-		x = self.OutConv1(x + skip0)
+		x = self.OutConv1(x + skip0)#self.ConvLayer9(torch.cat([x, skip0], dim=1))
 
 		x = self.OutConv2(x)
 

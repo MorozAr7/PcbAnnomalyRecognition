@@ -197,7 +197,7 @@ class DiscQualityCheckApi:
 
 	def get_multiscale_similarity(self, real_image_multiscale_maps, in_painted_image_multiscale_maps, similarity_function):
 		multi_window_maps = list()
-		for window_size in [5, 5, 5]:
+		for window_size in [5, 7, 9]:
 			multiscale_sim_maps = list()
 			for index in range(len(real_image_multiscale_maps)):
 				similarity_maps, _ = similarity_function(in_painted_image_multiscale_maps[index], real_image_multiscale_maps[index].repeat(1, 3, 1, 1).

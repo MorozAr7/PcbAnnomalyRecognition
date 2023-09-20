@@ -17,7 +17,7 @@ class DiscQualityCheckApi:
 		self.model = EdgeRestoreModel()
 		self.model_weights = "/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Model3.pt"
 		self.DEVICE = DEVICE
-		self.initialize_model()
+		#self.initialize_model()
 		self.image_size = 256
 		self.num_chunks = 4
 		self.square_sizes = [2 ** i for i in range(4, 7)]

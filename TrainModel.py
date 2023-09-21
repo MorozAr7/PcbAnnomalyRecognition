@@ -53,12 +53,12 @@ def one_epoch(models, optimizers, dataloader, is_training=True):
 				restored_images_per_masks = torch.cat([restored_images_per_masks, restored_image], dim=1)
 
 			restored_image = torch.sum(restored_images_per_masks * (1 - masks), dim=1, keepdim=True)
-			visualize = restored_image.permute(0, 2, 3, 1).detach().cpu().numpy()
+			"""visualize = restored_image.permute(0, 2, 3, 1).detach().cpu().numpy()
 			visualize_gt = image_gt.permute(0, 2, 3, 1).detach().cpu().numpy()
 			visualize_input = image_input.permute(0, 2, 3, 1).detach().cpu().numpy()
 			for index in range(image_gt.shape[0]):
 				cv2.imshow("img", np.hstack([visualize[index, ...], visualize_gt[index, ...], visualize_input[index, ...]]))
-				cv2.waitKey(0)
+				cv2.waitKey(0)"""
 			real_image_multiscale = api.get_multiscale_representation(image_gt)
 			in_painted_image_multiscale = api.get_multiscale_representation(restored_image)
 

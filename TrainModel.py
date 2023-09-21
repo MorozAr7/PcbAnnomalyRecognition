@@ -38,27 +38,28 @@ def one_epoch(models, optimizers, dataloader, is_training=True):
 	epoch_loss_ssim_grad = 0
 
 	if is_training:
-		for index, (gt_image, masks) in enumerate(dataloader):
+		for index, (image_input, image_gt, masks) in enumerate(dataloader):
 			print("BATCH TRAINING: ", index)
 			optimizers.zero_grad()
-			gt_image = gt_image.to(DEVICE)
-
+			image_input = image_input.to(DEVICE)
+			image_gt = image_gt.to(DEVICE)
 			masks = torch.tensor(masks, dtype=torch.float32).to(DEVICE)
 			restored_images_per_masks = torch.tensor([]).to(DEVICE)
 
 			for mask_idx in range(masks.shape[1]):
 				mask = masks[:, mask_idx:mask_idx + 1, ...]
 				#print(torch.mean(gt_image))
-				restored_image = models(gt_image * mask + (1 - mask) * torch.mean(gt_image), mask)
+				restored_image = models(image_input * mask + (1 - mask) * torch.mean(image_gt), mask)
 				restored_images_per_masks = torch.cat([restored_images_per_masks, restored_image], dim=1)
 
 			restored_image = torch.sum(restored_images_per_masks * (1 - masks), dim=1, keepdim=True)
-			#visualize = restored_image.permute(0, 2, 3, 1).detach().cpu().numpy()
-			#visualize_gt = gt_image.permute(0, 2, 3, 1).detach().cpu().numpy()
-			"""for index in range(gt_image.shape[0]):
-				cv2.imshow("img", np.hstack([visualize[index, ...], visualize_gt[index, ...]]))
-				cv2.waitKey(0)"""
-			real_image_multiscale = api.get_multiscale_representation(gt_image)
+			visualize = restored_image.permute(0, 2, 3, 1).detach().cpu().numpy()
+			visualize_gt = image_gt.permute(0, 2, 3, 1).detach().cpu().numpy()
+			visualize_input = image_input.permute(0, 2, 3, 1).detach().cpu().numpy()
+			for index in range(image_gt.shape[0]):
+				cv2.imshow("img", np.hstack([visualize[index, ...], visualize_gt[index, ...], visualize_input[index, ...]]))
+				cv2.waitKey(0)
+			real_image_multiscale = api.get_multiscale_representation(image_gt)
 			in_painted_image_multiscale = api.get_multiscale_representation(restored_image)
 
 			l1_loss = api.get_multiscale_l1_loss(real_image_multiscale, in_painted_image_multiscale)
@@ -78,15 +79,15 @@ def one_epoch(models, optimizers, dataloader, is_training=True):
 
 			torch.cuda.empty_cache()
 
-			epoch_loss_l1 += l1_loss.item() * gt_image.shape[0]
-			epoch_loss_ssim += biggest_scale_image * gt_image.shape[0]
-			epoch_loss_l1_grad += grad_l1_loss.item() * gt_image.shape[0]
-			epoch_loss_ssim_grad += biggest_scale_grad * gt_image.shape[0]
+			epoch_loss_l1 += l1_loss.item() * image_gt.shape[0]
+			epoch_loss_ssim += biggest_scale_image * image_gt.shape[0]
+			epoch_loss_l1_grad += grad_l1_loss.item() * image_gt.shape[0]
+			epoch_loss_ssim_grad += biggest_scale_grad * image_gt.shape[0]
 
 		return epoch_loss_l1 / (len(train_dataset)), epoch_loss_ssim / len(train_dataset), epoch_loss_l1_grad / len(train_dataset), epoch_loss_ssim_grad / len(train_dataset)
 	else:
 		with torch.no_grad():
-			for index, (gt_image, masks) in enumerate(dataloader):
+			for index, (image_input, image_gt, masks) in enumerate(dataloader):
 				print("BATCH VALIDATION: ", index)
 				epoch_loss_l1 += 0#loss_res.item()
 				torch.cuda.empty_cache()
@@ -94,7 +95,7 @@ def one_epoch(models, optimizers, dataloader, is_training=True):
 
 
 def main(model, optimizer,  training_dataloader, validation_dataloader):
-	for epoch in range(1, 5001):
+	for epoch in range(2000, 5001):
 		since = time.time()
 		change_learning_rate(optimizer, epoch)
 
@@ -116,7 +117,7 @@ def main(model, optimizer,  training_dataloader, validation_dataloader):
 
 if __name__ == "__main__":
 	model = EdgeRestoreModel().to(DEVICE).apply(init_weights)
-	#model.load_state_dict(torch.load("./Model3.pt", map_location="cpu"))
+	model.load_state_dict(torch.load("./Model4.pt", map_location="cpu"))
 	optimizer = torch.optim.Adam(lr=LEARNING_RATE, params=model.parameters())
 
 	train_dataset = DiskAnomalyDataset(data_augmentation=augmentation_training if APPLY_AUGMENTATION else None, use_multiscale=False)

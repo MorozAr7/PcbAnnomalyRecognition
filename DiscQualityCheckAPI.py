@@ -15,9 +15,9 @@ import torchvision
 class DiscQualityCheckApi:
 	def __init__(self, DEVICE):
 		self.model = EdgeRestoreModel()
-		self.model_weights = "/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Model3.pt"
+		self.model_weights = "/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Model4.pt"
 		self.DEVICE = DEVICE
-		#self.initialize_model()
+		self.initialize_model()
 		self.image_size = 256
 		self.num_chunks = 4
 		self.square_sizes = [2 ** i for i in range(4, 7)]
@@ -83,7 +83,6 @@ class DiscQualityCheckApi:
 		content_sim = (joint_std_map + self.C1) / (torch.sqrt(prediction_std_map + 1e-4) * torch.sqrt(ground_truth_std_map + 1e-4) + self.C1)
 
 		ssim_map = content_sim ** 1 * brightness_sim ** 1 * contrast_sim ** 1
-		# ssim_map = content_sim * brightness_sim * contrast_sim
 		ssim_map = self.resize_tensor(ssim_map, in_painted_image_tensor.shape[2])
 
 		return 1 - ssim_map, torch.mean(1 - ssim_map)
@@ -374,11 +373,11 @@ if __name__ == "__main__":
 	range_min = 0
 	range_max = 200
 	for image_name in images_list:
-		image1 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
-		image2 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
-		image3 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
-		image4 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
-		image5 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
+		image1 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedPositive/pcb_{random.randint(0, 200)}.png", 0)
+		image2 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedPositive/pcb_{random.randint(0, 200)}.png", 0)
+		image3 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedPositive/pcb_{random.randint(0, 200)}.png", 0)
+		image4 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedPositive/pcb_{random.randint(0, 200)}.png", 0)
+		image5 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedPositive/pcb_{random.randint(0, 200)}.png", 0)
 		image6 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
 		image7 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
 		image8 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)

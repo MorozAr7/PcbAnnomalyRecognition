@@ -1,7 +1,7 @@
 import pandas as pd
 import random
 import numpy as np
-from DataAugmentationGMSSSIM import transform_to_tensor
+from DataAugmentationGMSSSIM import transform_to_tensor, augmentation_noise
 import cv2
 from TrainConfig import *
 
@@ -77,18 +77,21 @@ class DiskAnomalyDataset(torch.utils.data.Dataset):
 
 	def __getitem__(self, index):
 
-		image_reference = cv2.imread("./Images/CroppedImagesPositive/" + f"pcb_{index}.png", 0)
-		image_reference = self.random_crop(image_reference)
+		image = cv2.imread("./Images/CroppedPositive/" + f"pcb_{index}.png", 0)
+		image = self.random_crop(image)
 		if self.data_augmentation:
-			transformed = self.data_augmentation(image=image_reference)
+			transformed = self.data_augmentation(image=image)
 
-			image_reference = transformed["image"]
-			image_reference = self.random_crop(image_reference)
-
+			image = transformed["image"]
+			image = self.random_crop(image)
+			image_input = augmentation_noise(image=image)["image"]
+			image_gt = image
 		masks = self.create_masks()
-		image_reference = cv2.resize(image_reference, (self.im_size, self.im_size))
-		#cv2.imshow("image", image_reference)
-		#cv2.waitKey(0)
-		image_reference = transform_to_tensor(image=image_reference)["image"]
+  
+		image_gt = cv2.resize(image_gt, (self.im_size, self.im_size))
+		image_input = cv2.resize(image_input, (self.im_size, self.im_size))
 
-		return image_reference, masks
+		image_gt = transform_to_tensor(image=image_gt)["image"]
+		image_input = transform_to_tensor(image=image_input)["image"]
+
+		return image_input, image_gt, masks

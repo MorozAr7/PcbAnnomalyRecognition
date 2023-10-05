@@ -82,7 +82,7 @@ class DiscQualityCheckApi:
 		contrast_sim = (2 * torch.sqrt(prediction_std_map + 1e-4) * torch.sqrt(ground_truth_std_map + 1e-4) + self.C1) / (prediction_std_map + ground_truth_std_map + self.C1)
 		content_sim = (joint_std_map + self.C1) / (torch.sqrt(prediction_std_map + 1e-4) * torch.sqrt(ground_truth_std_map + 1e-4) + self.C1)
 
-		ssim_map = content_sim ** 2 * brightness_sim ** 1 * contrast_sim ** 1
+		ssim_map = content_sim ** 1 * brightness_sim ** 1 * contrast_sim ** 1
 		ssim_map = self.resize_tensor(ssim_map, in_painted_image_tensor.shape[2])
 
 		return 1 - ssim_map, torch.mean(1 - ssim_map)

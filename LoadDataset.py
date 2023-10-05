@@ -9,7 +9,7 @@ from TrainConfig import *
 class DiskAnomalyDataset(torch.utils.data.Dataset):
 	def __init__(self, data_augmentation=None, use_multiscale=False):
 		super(DiskAnomalyDataset, self).__init__()
-		self.num_images = 200
+		self.num_images = 97
 		self.data_augmentation = data_augmentation
 		self.use_multiscale = use_multiscale
 		self.im_size = IMAGE_SIZE
@@ -66,9 +66,9 @@ class DiskAnomalyDataset(torch.utils.data.Dataset):
 
 	@staticmethod
 	def random_crop(image):
-		size = random.randint(285, 299)
-		x_coord = random.randint(0, 300 - size - 1)
-		y_coord = random.randint(0, 300 - size - 1)
+		size = random.randint(450, 500)
+		x_coord = random.randint(0, 500 - size - 1)
+		y_coord = random.randint(0, 500 - size - 1)
 
 		return image[y_coord:y_coord + size, x_coord:x_coord + size]
 

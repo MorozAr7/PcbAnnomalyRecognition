@@ -15,16 +15,16 @@ import torchvision
 class DiscQualityCheckApi:
 	def __init__(self, DEVICE):
 		self.model = EdgeRestoreModel()
-		self.model_weights = "/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Model4.pt"
+		self.model_weights = "/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Model5.pt"
 		self.DEVICE = DEVICE
-		#self.initialize_model()
-		self.image_size = 256
+		self.initialize_model()
+		self.image_size = 512
 		self.num_chunks = 4
 		self.square_sizes = [2 ** i for i in range(4, 7)]
 		self.grid_sizes = [self.image_size // i for i in self.square_sizes]
 		self.num_grid_scales = len(self.grid_sizes)
 		self.num_scales = 3
-		self.image_size_multiscale = [256, 128, 64]
+		self.image_size_multiscale = [self.image_size, self.image_size//2, self.image_size//4]
 		self.grid_coords = list()
 		self.K1 = 0.01
 		self.K2 = 0.03
@@ -82,7 +82,7 @@ class DiscQualityCheckApi:
 		contrast_sim = (2 * torch.sqrt(prediction_std_map + 1e-4) * torch.sqrt(ground_truth_std_map + 1e-4) + self.C1) / (prediction_std_map + ground_truth_std_map + self.C1)
 		content_sim = (joint_std_map + self.C1) / (torch.sqrt(prediction_std_map + 1e-4) * torch.sqrt(ground_truth_std_map + 1e-4) + self.C1)
 
-		ssim_map = content_sim ** 1 * brightness_sim ** 1 * contrast_sim ** 1
+		ssim_map = content_sim ** 2 * brightness_sim ** 1 * contrast_sim ** 1
 		ssim_map = self.resize_tensor(ssim_map, in_painted_image_tensor.shape[2])
 
 		return 1 - ssim_map, torch.mean(1 - ssim_map)
@@ -207,16 +207,12 @@ class DiscQualityCheckApi:
 				similarity_maps = similarity_maps.reshape(self.num_images, self.num_grid_scales, 1, similarity_maps.shape[-1], similarity_maps.shape[-1])
 				similarity_maps = (similarity_maps[:, 0, ...] * similarity_maps[:, 1, ...] + \
 				                  similarity_maps[:, 1, ...] * similarity_maps[:, 2, ...])
-				#print(similarity_maps.shape)
-				#self.visualize_torch_tensor(similarity_maps[0, ...])
-				#similarity_maps = (similarity_maps[:, 0, ...] + similarity_maps[:, 1, ...] + similarity_maps[:, 2, ...]) / 3
+
 				multiscale_sim_maps.append(similarity_maps)
 			multi_window_maps.append(multiscale_sim_maps)
 		multiscale_sim_maps = list()
 		for scale_num in range(self.num_scales):
-			multiscale_sim_maps.append((multi_window_maps[0][scale_num] + multi_window_maps[1][scale_num] + multi_window_maps[2][scale_num]) / 3)# + multi_window_maps[1][scale_num] *
-		# multi_window_maps[2][scale_num])/2) #*
-		# multi_window_maps[2][scale_num])
+			multiscale_sim_maps.append((multi_window_maps[0][scale_num] + multi_window_maps[1][scale_num] + multi_window_maps[2][scale_num]) / 3)
 
 		return multiscale_sim_maps
 
@@ -344,7 +340,7 @@ class DiscQualityCheckApi:
 			gradient_similarity = self.combine_multiscale_maps(multiscale_grad_sim_maps)
 			image_similarity = self.combine_multiscale_maps(multiscale_image_sim_maps)
 
-			total_defect_map = (gradient_similarity + image_similarity)/2
+			total_defect_map = (gradient_similarity + image_similarity)
 
 			heatmap_batch, defect_scores = self.get_rgb_heatmap(total_defect_map, in_painted_images_combined, images_batch)
 			print(defect_scores)
@@ -373,11 +369,11 @@ if __name__ == "__main__":
 	range_min = 0
 	range_max = 200
 	for image_name in images_list:
-		image1 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedPositive/pcb_{random.randint(0, 200)}.png", 0)
-		image2 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedPositive/pcb_{random.randint(0, 200)}.png", 0)
-		image3 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedPositive/pcb_{random.randint(0, 200)}.png", 0)
-		image4 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedPositive/pcb_{random.randint(0, 200)}.png", 0)
-		image5 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedPositive/pcb_{random.randint(0, 200)}.png", 0)
+		image1 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedPositive/pcb_{random.randint(200, 206)}.png", 0)
+		image2 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedPositive/pcb_{random.randint(200, 206)}.png", 0)
+		image3 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedPositive/pcb_{random.randint(200, 206)}.png", 0)
+		image4 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedPositive/pcb_{random.randint(200, 206)}.png", 0)
+		image5 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedPositive/pcb_{random.randint(200, 206)}.png", 0)
 		image6 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
 		image7 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)
 		image8 = cv2.imread(f"/Users/artemmoroz/Desktop/CIIRC_projects/PcbAnnomalyRecognition/Images/CroppedNegative/pcb_{random.randint(0, 1)}.png", 0)

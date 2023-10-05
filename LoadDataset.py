@@ -66,7 +66,7 @@ class DiskAnomalyDataset(torch.utils.data.Dataset):
 
 	@staticmethod
 	def random_crop(image):
-		size = random.randint(450, 500)
+		size = random.randint(450, 499)
 		x_coord = random.randint(0, 500 - size - 1)
 		y_coord = random.randint(0, 500 - size - 1)
 
